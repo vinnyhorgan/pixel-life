@@ -144,12 +144,26 @@ function love.update(dt)
             reset()
         end
 
-        if ui:button("Run") then
-            running = true
+        if ui:button("Start / Stop") then
+            running = not running
         end
 
-        if ui:button("Stop") then
-            running = false
+        if ui:button("Randomize All") then
+            atoms = {}
+            groups = {}
+            rules = {}
+
+            for i = 0, math.random(1, 5) do
+                Group(tostring(math.random(0, 1000000)), math.random(50, 400), nuklear.colorRGBA(math.random(0, 255), math.random(0, 255), math.random(0, 255)))
+            end
+
+            for _, group1 in ipairs(groups) do
+                for _, group2 in ipairs(groups) do
+                    Rule(group1, group2, math.random(-100, 100) / 100)
+                end
+            end
+
+            senseRadius.value = math.random(20, 400)
         end
 
         ui:label("Sense Radius: " .. senseRadius.value)
@@ -280,17 +294,28 @@ function love.draw()
     love.graphics.setColor(1, 1, 1)
     love.graphics.print("FPS: " .. love.timer.getFPS(), 260, 10)
     love.graphics.print("RUNNING: " .. tostring(running), 260, 40)
+    love.graphics.print("Pan around with middle click.\nZoom with ctrl + wheel.\nHave fun :)", 260, 80)
 
     ui:draw()
 end
 
-function love.wheelmoved(x, y)
-    camera.scale = camera.scale + y * 0.1
+function love.mousemoved(x, y, dx, dy, istouch)
+    if love.mouse.isDown(3) then
+        camera:move(-dx, -dy)
+    end
 
-    if camera.scale < 0.2 then
-        camera.scale = 0.2
-    elseif camera.scale > 3 then
-        camera.scale = 3
+    ui:mousemoved(x, y, dx, dy, istouch)
+end
+
+function love.wheelmoved(x, y)
+    if love.keyboard.isDown("lctrl") then
+        camera.scale = camera.scale + y * 0.1
+
+        if camera.scale < 0.2 then
+            camera.scale = 0.2
+        elseif camera.scale > 3 then
+            camera.scale = 3
+        end
     end
 
     ui:wheelmoved(x, y)
@@ -298,24 +323,6 @@ end
 
 function love.keypressed(key, scancode, isrepeat)
     ui:keypressed(key, scancode, isrepeat)
-
-    if key == "space" then
-        running = not running
-    elseif key == "r" then
-        atoms = {}
-        groups = {}
-        rules = {}
-
-        for i = 0, math.random(1, 5) do
-            Group(tostring(math.random(0, 1000000)), math.random(50, 400), nuklear.colorRGBA(math.random(0, 255), math.random(0, 255), math.random(0, 255)))
-        end
-
-        for _, group1 in ipairs(groups) do
-            for _, group2 in ipairs(groups) do
-                Rule(group1, group2, math.random(-100, 100) / 100)
-            end
-        end
-    end
 end
 
 function love.keyreleased(key, scancode)
@@ -328,10 +335,6 @@ end
 
 function love.mousereleased(x, y, button, istouch, presses)
     ui:mousereleased(x, y, button, istouch, presses)
-end
-
-function love.mousemoved(x, y, dx, dy, istouch)
-    ui:mousemoved(x, y, dx, dy, istouch)
 end
 
 function love.textinput(text)
